@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Movie Tracker</string>
+    <string name="search_hint">Поиск фильмов...</string>
+    <string name="add_button">Добавить фильм</string>
+    <string name="watched">Просмотрено</string>
+    <string name="delete">Удалить</string>
+    <string name="delete_confirm">Удалить этот фильм?</string>
+    <string name="empty_list">Фильмы не найдены. Добавьте первый!</string>
+</resources>
