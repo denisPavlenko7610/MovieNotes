@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "262190133362",
+    "project_id": "movienotes-a6bc3",
+    "storage_bucket": "movienotes-a6bc3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:262190133362:android:f2b33b8a1cc807ab3412eb",
+        "android_client_info": {
+          "package_name": "com.RDragon.movienotes"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "262190133362-3c8r485ieq3h4sgae2ri4obiqpj4b119.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.RDragon.movienotes",
+            "certificate_hash": "f3b978f3ec56af260f1eb0d9a82b90056e996536"
+          }
+        },
+        {
+          "client_id": "262190133362-977vq5bojebrv0sgcacd1n82jtr85u8t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCx7lm5AV7eo7ZCMYE8Rk3TeqaB22Q42Ho"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "262190133362-977vq5bojebrv0sgcacd1n82jtr85u8t.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

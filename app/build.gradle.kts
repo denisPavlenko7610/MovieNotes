@@ -3,19 +3,18 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp")
-
+    id("com.google.gms.google-services")
 }
 
 android {
-    namespace = "com.RDragon.movienotes"
+    namespace = "com.rdragon.movienotes"
     compileSdk = 35
-
     defaultConfig {
         applicationId = "com.RDragon.movienotes"
-        minSdk = 29
+        minSdk = 28
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 3
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -55,5 +54,11 @@ dependencies {
     implementation (libs.androidx.lifecycle.runtime.ktx)
     implementation (libs.androidx.room.runtime)
     implementation (libs.androidx.room.ktx)
-    ksp("androidx.room:room-compiler:2.5.0")
+    ksp(libs.room.compiler)
+    implementation (libs.firebase.firestore.ktx)
+    implementation (libs.kotlinx.coroutines.play.services)
+    implementation ("com.google.firebase:firebase-auth:22.3.1")
+    implementation(platform("com.google.firebase:firebase-bom:33.15.0"))
+    implementation ("com.google.firebase:firebase-analytics")
+    implementation ("com.google.android.gms:play-services-auth:20.6.0")
 }
