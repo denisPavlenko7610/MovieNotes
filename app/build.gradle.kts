@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.movienotes"
+    namespace = "com.RDragon.movienotes"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.movienotes"
+        applicationId = "com.RDragon.movienotes"
         minSdk = 29
         targetSdk = 35
         versionCode = 1

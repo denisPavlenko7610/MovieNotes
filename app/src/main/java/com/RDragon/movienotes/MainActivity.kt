@@ -1,4 +1,4 @@
-package com.example.movienotes
+package com.RDragon.movienotes
 
 import android.os.Bundle
 import android.text.Editable

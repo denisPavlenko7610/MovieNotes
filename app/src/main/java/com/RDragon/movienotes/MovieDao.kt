@@ -1,4 +1,4 @@
-package com.example.movienotes
+package com.RDragon.movienotes
 
 import androidx.lifecycle.LiveData
 import androidx.room.*
