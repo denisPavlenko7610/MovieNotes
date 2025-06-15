@@ -1,10 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
+<!-- res/values/strings.xml -->
 <resources>
-    <string name="app_name">Movie Tracker</string>
-    <string name="search_hint">Поиск фильмов...</string>
-    <string name="add_button">Добавить фильм</string>
-    <string name="watched">Просмотрено</string>
-    <string name="delete">Удалить</string>
-    <string name="delete_confirm">Удалить этот фильм?</string>
-    <string name="empty_list">Фильмы не найдены. Добавьте первый!</string>
+    <string name="app_name">Movie Notes</string>
+    <string name="search_hint">Search movies…</string>
+    <string name="add_button">Add movie</string>
+    <string name="watched">Watched</string>
+    <string name="delete">Delete</string>
+    <string name="empty_list">No movies found. Add your first!</string>
 </resources>

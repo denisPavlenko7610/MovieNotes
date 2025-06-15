@@ -1,12 +1,10 @@
-<?xml version="1.0" encoding="utf-8"?>
+<!-- res/values/dimens.xml -->
 <resources>
     <dimen name="spacing_xs">4dp</dimen>
     <dimen name="spacing_sm">8dp</dimen>
     <dimen name="spacing_md">16dp</dimen>
     <dimen name="spacing_lg">24dp</dimen>
-    <dimen name="spacing_xl">32dp</dimen>
-
+    <dimen name="fab_size">56dp</dimen>
     <dimen name="card_elevation">4dp</dimen>
-    <dimen name="card_radius">16dp</dimen> <dimen name="fab_size">56dp</dimen>
-    <dimen name="control_height">48dp</dimen>
+    <dimen name="card_radius">12dp</dimen>
 </resources>

@@ -2,58 +2,54 @@
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="4dp"
-    app:cardCornerRadius="8dp"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="12dp"
     app:cardElevation="2dp"
-    app:strokeWidth="0.5dp"
-    app:strokeColor="?attr/colorOutline">
+    app:cardBackgroundColor="#999"
+    >
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="12dp">
+        android:padding="16dp">
 
         <TextView
             android:id="@+id/movieTitle"
+            android:theme="@style/WhiteText"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
             android:ellipsize="end"
+            android:textSize="16sp"
             android:maxLines="2"
-            android:textSize="20dp"
-            android:textAppearance="?attr/textAppearanceTitleMedium"
-            app:layout_constraintEnd_toStartOf="@id/deleteButton"
+            android:text="Movie Title"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/deleteButton"
             app:layout_constraintTop_toTopOf="parent"
-            tools:text="Movie Title"
-            android:textColor="#eee"
             />
 
-        <ImageButton
+        <ImageView
             android:id="@+id/deleteButton"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:contentDescription="@string/delete"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
+            android:padding="4dp"
             app:srcCompat="@drawable/ic_delete"
-            android:textColor="#eee"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:clickable="true"
             />
 
-        <CheckBox
+        <com.google.android.material.checkbox.MaterialCheckBox
             android:id="@+id/movieCheck"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:buttonTint="?attr/colorPrimary"
+            android:layout_marginTop="@dimen/spacing_sm"
             android:text="@string/watched"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            app:buttonTint="?attr/colorPrimary"
             app:layout_constraintTop_toBottomOf="@id/movieTitle"
-            android:textColor="#eee"/>
-
+            app:layout_constraintStart_toStartOf="parent"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

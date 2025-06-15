@@ -46,11 +46,9 @@ dependencies {
     implementation(libs.androidx.ui)
     implementation (libs.material)
     implementation(libs.androidx.ui.tooling.preview)
-
+    implementation (libs.androidx.constraintlayout)
     implementation (libs.kotlin.stdlib)
     implementation (libs.androidx.core.ktx)
-    implementation (libs.androidx.appcompat)
-    implementation (libs.material)
     implementation (libs.androidx.recyclerview)
     implementation (libs.kotlinx.coroutines.core)
     implementation (libs.kotlinx.coroutines.android)
@@ -58,5 +56,4 @@ dependencies {
     implementation (libs.androidx.room.runtime)
     implementation (libs.androidx.room.ktx)
     ksp("androidx.room:room-compiler:2.5.0")
-
 }
