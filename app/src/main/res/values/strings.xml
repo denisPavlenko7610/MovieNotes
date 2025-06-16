@@ -7,4 +7,5 @@
     <string name="delete">Delete</string>
     <string name="empty_list">No movies found. Add your first!</string>
     <string name="default_web_client_id">262190133362-977vq5bojebrv0sgcacd1n82jtr85u8t.apps.googleusercontent.com</string>
+    <string name="title_auth">Authorization</string>
 </resources>
