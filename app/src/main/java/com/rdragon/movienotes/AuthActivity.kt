@@ -3,7 +3,6 @@ package com.rdragon.movienotes
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -28,19 +27,13 @@ class AuthActivity : AppCompatActivity() {
             .build()
         googleSignInClient = GoogleSignIn.getClient(this, gso)
 
-        val googleSignInButton = findViewById<Button>(R.id.btnGoogle)
-        val continueAsGuestButton = findViewById<Button>(R.id.btnGuest)
-
-        googleSignInButton.setOnClickListener { signInWithGoogle() }
-        continueAsGuestButton.setOnClickListener {
-            MainActivity.start(this, skipSync = true)
-            finish()
+        findViewById<Button>(R.id.btnGoogle).setOnClickListener {
+            startActivityForResult(googleSignInClient.signInIntent, RC_SIGN_IN)
         }
-    }
-
-    private fun signInWithGoogle() {
-        val signInIntent = googleSignInClient.signInIntent
-        startActivityForResult(signInIntent, RC_SIGN_IN)
+        findViewById<Button>(R.id.btnGuest).setOnClickListener {
+            // Заходим как гость
+            MainActivity.start(this, skipSync = true)
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -48,20 +41,17 @@ class AuthActivity : AppCompatActivity() {
         if (requestCode == RC_SIGN_IN) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
             try {
-                val account: GoogleSignInAccount? = task.getResult(ApiException::class.java)
-                val credential = GoogleAuthProvider.getCredential(account?.idToken, null)
-                FirebaseAuth.getInstance().signInWithCredential(credential)
-                    .addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            //Log.d("AuthActivity", "Google sign-in successful")
+                val account: GoogleSignInAccount = task.getResult(ApiException::class.java)!!
+                val cred = GoogleAuthProvider.getCredential(account.idToken, null)
+                FirebaseAuth.getInstance()
+                    .signInWithCredential(cred)
+                    .addOnCompleteListener { authTask ->
+                        if (authTask.isSuccessful) {
+                            // После успешного входа — в MainActivity с синхронизацией
                             MainActivity.start(this, skipSync = false)
-                            finish()
-                        } else {
-                            //Log.e("AuthActivity", "FirebaseAuth sign-in failed", task.exception)
                         }
                     }
             } catch (e: ApiException) {
-                //Log.e("AuthActivity", "Google sign-in failed", e)
             }
         }
     }

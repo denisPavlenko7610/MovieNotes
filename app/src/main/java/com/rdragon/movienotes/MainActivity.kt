@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.inputmethod.EditorInfo
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
@@ -17,6 +16,7 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : AppCompatActivity() {
+
     private lateinit var adapter: MovieAdapter
     private lateinit var viewModel: MovieViewModel
     private lateinit var addButton: ImageView
@@ -25,10 +25,11 @@ class MainActivity : AppCompatActivity() {
         private const val EXTRA_SKIP_SYNC = "skip_sync"
 
         fun start(activity: Activity, skipSync: Boolean) {
-            activity.startActivity(
-                Intent(activity, MainActivity::class.java)
-                    .putExtra(EXTRA_SKIP_SYNC, skipSync)
-            )
+            Intent(activity, MainActivity::class.java).apply {
+                putExtra(EXTRA_SKIP_SYNC, skipSync)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }.also { activity.startActivity(it) }
         }
     }
 
@@ -36,25 +37,20 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         FirebaseApp.initializeApp(this)
-
-        val user = FirebaseAuth.getInstance().currentUser
-        if (user == null) {
-            //Log.d("MainActivity", "User not authenticated, launching AuthActivity")
+        if (FirebaseAuth.getInstance().currentUser == null) {
             AuthActivity.start(this)
             finish()
             return
-        } else {
-            //Log.d("MainActivity", "User is authenticated: uid=${user.uid}")
         }
 
         setContentView(R.layout.activity_main)
 
+        val skipSync = intent.getBooleanExtra(EXTRA_SKIP_SYNC, false)
+
         val factory = ViewModelProvider.AndroidViewModelFactory.getInstance(application)
         viewModel = ViewModelProvider(this, factory).get(MovieViewModel::class.java)
 
-        val skipSync = intent.getBooleanExtra(EXTRA_SKIP_SYNC, false)
         if (!skipSync) {
-            //Log.d("MainActivity", "Calling viewModel.syncFromRemote() manually")
             viewModel.syncFromRemote()
         }
 
@@ -80,7 +76,6 @@ class MainActivity : AppCompatActivity() {
         recyclerView.adapter = adapter
 
         viewModel.movies.observe(this) { list ->
-            //Log.d("MainActivity", "LiveData movies: size=${list.size} → $list")
             adapter.submitList(list)
         }
 
@@ -88,7 +83,6 @@ class MainActivity : AppCompatActivity() {
             override fun afterTextChanged(s: Editable?) {
                 viewModel.setSearchQuery(s.toString())
             }
-
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
@@ -113,11 +107,7 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         val skipSync = intent.getBooleanExtra(EXTRA_SKIP_SYNC, false)
         if (!skipSync && ::viewModel.isInitialized) {
-            //Log.d("MainActivity", "Syncing changes to Firebase...")
             viewModel.syncToRemote()
-            //Log.d("MainActivity", "Sync completed successfully.")
-        } else {
-            //Log.d("MainActivity", "Skipping sync due to skipSync flag or uninitialized ViewModel.")
         }
     }
 }

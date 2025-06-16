@@ -13,7 +13,7 @@ android {
         applicationId = "com.RDragon.movienotes"
         minSdk = 28
         targetSdk = 35
-        versionCode = 4
+        versionCode = 6
         versionName = "1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
