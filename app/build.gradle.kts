@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp")
     id("com.google.gms.google-services")
+    id ("com.google.firebase.crashlytics")
 }
 
 android {
@@ -13,7 +14,7 @@ android {
         applicationId = "com.RDragon.movienotes"
         minSdk = 28
         targetSdk = 35
-        versionCode = 6
+        versionCode = 13
         versionName = "1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -61,4 +62,5 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.15.0"))
     implementation ("com.google.firebase:firebase-analytics")
     implementation ("com.google.android.gms:play-services-auth:20.6.0")
+    implementation("com.google.firebase:firebase-crashlytics")
 }

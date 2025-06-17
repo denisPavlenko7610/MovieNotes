@@ -1,69 +1,94 @@
 package com.rdragon.movienotes
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
-import android.view.inputmethod.EditorInfo
+import android.view.View
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.doAfterTextChanged
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import com.google.android.material.textfield.TextInputEditText
-import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
+import kotlinx.coroutines.runBlocking
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var adapter: MovieAdapter
-    private lateinit var viewModel: MovieViewModel
-    private lateinit var addButton: ImageView
-
     companion object {
-        private const val EXTRA_SKIP_SYNC = "skip_sync"
-
-        fun start(activity: Activity, skipSync: Boolean) {
-            Intent(activity, MainActivity::class.java).apply {
-                putExtra(EXTRA_SKIP_SYNC, skipSync)
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                        Intent.FLAG_ACTIVITY_CLEAR_TASK
-            }.also { activity.startActivity(it) }
-        }
+        private const val RC_SIGN_IN = 1001
     }
+
+    private lateinit var auth: FirebaseAuth
+    private lateinit var googleSignInClient: GoogleSignInClient
+    private lateinit var viewModel: MovieViewModel
+
+    private lateinit var btnGoogle: ImageView
+    private lateinit var searchInput: TextInputEditText
+    private lateinit var addBtn: ImageView
+    private lateinit var recyclerView: androidx.recyclerview.widget.RecyclerView
+    private lateinit var searchLayout: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main_content)
 
-        FirebaseApp.initializeApp(this)
-        if (FirebaseAuth.getInstance().currentUser == null) {
-            AuthActivity.start(this)
-            finish()
-            return
+        auth = FirebaseAuth.getInstance()
+
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+
+        googleSignInClient = GoogleSignIn.getClient(this, gso)
+
+        btnGoogle    = findViewById(R.id.btnGoogle)
+        searchLayout = findViewById(R.id.searchLayout)
+        searchInput  = findViewById(R.id.searchInput)
+        addBtn       = findViewById(R.id.addBtn)
+        recyclerView = findViewById(R.id.recyclerView)
+
+        btnGoogle.setOnClickListener {
+            btnGoogle.isEnabled = false
+            val signInIntent = googleSignInClient.signInIntent
+            startActivityForResult(signInIntent, RC_SIGN_IN)
         }
 
-        setContentView(R.layout.activity_main)
-
-        val skipSync = intent.getBooleanExtra(EXTRA_SKIP_SYNC, false)
-
-        val factory = ViewModelProvider.AndroidViewModelFactory.getInstance(application)
-        viewModel = ViewModelProvider(this, factory).get(MovieViewModel::class.java)
-
-        if (!skipSync) {
-            viewModel.syncFromRemote()
-        }
-
-        setupUI()
+        updateUI()
     }
 
-    private fun setupUI() {
-        val searchInput = findViewById<TextInputEditText>(R.id.searchInput)
-        addButton = findViewById(R.id.addBtn)
-        addButton.setOnClickListener { addMovie(searchInput) }
+    private fun updateUI() {
+        val user = auth.currentUser
+        if (user == null) {
+            // not signed in → show only Google button
+            btnGoogle.visibility    = View.VISIBLE
+            searchLayout.visibility = View.GONE
+            addBtn.visibility       = View.GONE
+            recyclerView.visibility = View.GONE
+            btnGoogle.isEnabled     = true
+        } else {
+            // signed in → hide Google, show list/search
+            btnGoogle.visibility    = View.GONE
+            searchLayout.visibility = View.VISIBLE
+            addBtn.visibility       = View.VISIBLE
+            recyclerView.visibility = View.VISIBLE
 
-        val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
-        adapter = MovieAdapter(
+            // setup ViewModel & data
+            val factory = ViewModelProvider.AndroidViewModelFactory.getInstance(application)
+            viewModel = ViewModelProvider(this, factory).get(MovieViewModel::class.java)
+            runBlocking { viewModel.syncFromRemote() }
+            setupMainUI()
+        }
+    }
+
+    private fun setupMainUI() {
+        val adapter = MovieAdapter(
             onCheckedChange = { movie, isChecked ->
                 movie.watched = isChecked
                 viewModel.updateMovie(movie)
@@ -72,42 +97,52 @@ class MainActivity : AppCompatActivity() {
                 viewModel.deleteMovie(movie)
             }
         )
+
         recyclerView.layoutManager = GridLayoutManager(this, 2)
-        recyclerView.adapter = adapter
+        recyclerView.adapter       = adapter
 
-        viewModel.movies.observe(this) { list ->
-            adapter.submitList(list)
-        }
-
-        searchInput.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable?) {
-                viewModel.setSearchQuery(s.toString())
-            }
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+        viewModel.movies.observe(this, Observer { list ->
+            adapter.submitList(list ?: emptyList())
         })
 
-        searchInput.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_DONE) {
-                addMovie(searchInput)
-                true
-            } else false
+        addBtn.setOnClickListener {
+            val title = searchInput.text.toString().trim()
+            if (title.isNotEmpty()) {
+                viewModel.addNewMovie(title)
+                searchInput.text?.clear()
+            }
+        }
+
+        searchInput.doAfterTextChanged { editable ->
+            viewModel.setSearchQuery(editable?.toString() ?: "")
         }
     }
 
-    private fun addMovie(input: TextInputEditText) {
-        val title = input.text.toString().trim()
-        if (title.isNotEmpty()) {
-            viewModel.addNewMovie(title)
-            input.text?.clear()
-        }
-    }
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == RC_SIGN_IN) {
+            try {
+                val task    = GoogleSignIn.getSignedInAccountFromIntent(data)
+                val account = task.getResult(ApiException::class.java)!!
+                val cred    = GoogleAuthProvider.getCredential(account.idToken, null)
 
-    override fun onDestroy() {
-        super.onDestroy()
-        val skipSync = intent.getBooleanExtra(EXTRA_SKIP_SYNC, false)
-        if (!skipSync && ::viewModel.isInitialized) {
-            viewModel.syncToRemote()
+                auth.signInWithCredential(cred)
+                    .addOnCompleteListener { authTask ->
+                        if (authTask.isSuccessful) {
+                            updateUI()
+                        } else {
+                            Toast.makeText(this,
+                                "Authentication failed: ${authTask.exception?.message}",
+                                Toast.LENGTH_LONG).show()
+                            btnGoogle.isEnabled = true
+                        }
+                    }
+            } catch (e: ApiException) {
+                Toast.makeText(this,
+                    "Google sign-in failed (code ${e.statusCode}): ${e.localizedMessage}",
+                    Toast.LENGTH_LONG).show()
+                btnGoogle.isEnabled = true
+            }
         }
     }
 }
