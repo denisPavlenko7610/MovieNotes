@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "262190133362-3c8r485ieq3h4sgae2ri4obiqpj4b119.apps.googleusercontent.com",
+          "client_id": "262190133362-5m0jhicg7bifcunbbj0btdtv27eng8ct.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.RDragon.movienotes",
-            "certificate_hash": "f3b978f3ec56af260f1eb0d9a82b90056e996536"
+            "certificate_hash": "ff99418900b7d6fb9cdad351df978e6f48b85983"
           }
         },
         {
