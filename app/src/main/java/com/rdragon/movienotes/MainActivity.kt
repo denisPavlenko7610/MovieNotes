@@ -26,6 +26,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private lateinit var auth: FirebaseAuth
+    private lateinit var authStateListener: FirebaseAuth.AuthStateListener
     private lateinit var googleSignInClient: GoogleSignInClient
     private lateinit var viewModel: MovieViewModel
 
@@ -60,26 +61,44 @@ class MainActivity : AppCompatActivity() {
             startActivityForResult(signInIntent, RC_SIGN_IN)
         }
 
-        updateUI()
+        authStateListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+            val user = firebaseAuth.currentUser
+            if (user != null) {
+                updateUI()
+            } else {
+                btnGoogle.visibility = View.VISIBLE
+                searchLayout.visibility = View.GONE
+                addBtn.visibility = View.GONE
+                recyclerView.visibility = View.GONE
+                btnGoogle.isEnabled = true
+            }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        auth.addAuthStateListener(authStateListener)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        auth.removeAuthStateListener(authStateListener)
     }
 
     private fun updateUI() {
         val user = auth.currentUser
         if (user == null) {
-            // not signed in → show only Google button
-            btnGoogle.visibility    = View.VISIBLE
+            btnGoogle.visibility = View.VISIBLE
             searchLayout.visibility = View.GONE
-            addBtn.visibility       = View.GONE
+            addBtn.visibility = View.GONE
             recyclerView.visibility = View.GONE
-            btnGoogle.isEnabled     = true
+            btnGoogle.isEnabled = true
         } else {
-            // signed in → hide Google, show list/search
-            btnGoogle.visibility    = View.GONE
+            btnGoogle.visibility = View.GONE
             searchLayout.visibility = View.VISIBLE
-            addBtn.visibility       = View.VISIBLE
+            addBtn.visibility = View.VISIBLE
             recyclerView.visibility = View.VISIBLE
 
-            // setup ViewModel & data
             val factory = ViewModelProvider.AndroidViewModelFactory.getInstance(application)
             viewModel = ViewModelProvider(this, factory).get(MovieViewModel::class.java)
             runBlocking { viewModel.syncFromRemote() }
@@ -99,7 +118,7 @@ class MainActivity : AppCompatActivity() {
         )
 
         recyclerView.layoutManager = GridLayoutManager(this, 2)
-        recyclerView.adapter       = adapter
+        recyclerView.adapter = adapter
 
         viewModel.movies.observe(this, Observer { list ->
             adapter.submitList(list ?: emptyList())
@@ -122,25 +141,29 @@ class MainActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == RC_SIGN_IN) {
             try {
-                val task    = GoogleSignIn.getSignedInAccountFromIntent(data)
+                val task = GoogleSignIn.getSignedInAccountFromIntent(data)
                 val account = task.getResult(ApiException::class.java)!!
-                val cred    = GoogleAuthProvider.getCredential(account.idToken, null)
+                val cred = GoogleAuthProvider.getCredential(account.idToken, null)
 
                 auth.signInWithCredential(cred)
                     .addOnCompleteListener { authTask ->
                         if (authTask.isSuccessful) {
-                            updateUI()
+                            // automatic call update ui from authStateListener
                         } else {
-                            Toast.makeText(this,
+                            Toast.makeText(
+                                this,
                                 "Authentication failed: ${authTask.exception?.message}",
-                                Toast.LENGTH_LONG).show()
+                                Toast.LENGTH_LONG
+                            ).show()
                             btnGoogle.isEnabled = true
                         }
                     }
             } catch (e: ApiException) {
-                Toast.makeText(this,
+                Toast.makeText(
+                    this,
                     "Google sign-in failed (code ${e.statusCode}): ${e.localizedMessage}",
-                    Toast.LENGTH_LONG).show()
+                    Toast.LENGTH_LONG
+                ).show()
                 btnGoogle.isEnabled = true
             }
         }

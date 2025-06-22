@@ -3,6 +3,7 @@ package com.rdragon.movienotes
 import android.app.Application
 import androidx.lifecycle.*
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 class MovieViewModel(application: Application) : AndroidViewModel(application) {
     private val dao = MovieDatabase.getInstance(application).movieDao()
@@ -23,7 +24,7 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun addNewMovie(name: String) = viewModelScope.launch {
-        val movie = Movie(name = name)
+        val movie = Movie(id = UUID.randomUUID().toString(), name = name)
         dao.insertAll(listOf(movie))
         repo.syncMovieToRemote(movie)
     }

@@ -1,5 +1,6 @@
 package com.rdragon.movienotes
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
@@ -25,8 +26,10 @@ class MovieRepository(private val dao: MovieDao) {
             val list = snapshot.documents.mapNotNull { doc ->
                 doc.toObject(Movie::class.java)?.copy(id = doc.id)
             }
+            Log.d(TAG, "Fetched ${list.size} movies from Firestore")
             dao.insertAll(list)
         } catch (e: Exception) {
+            Log.e(TAG, "syncFromRemote failed", e)
         }
     }
 
@@ -37,8 +40,10 @@ class MovieRepository(private val dao: MovieDao) {
         try {
             val remoteRef = db.collection("users").document(user.uid).collection("movies")
             val map = mapOf("name" to movie.name, "watched" to movie.watched)
+            Log.d(TAG, "Saving movie to Firestore: ${movie.id} ${movie.name}")
             remoteRef.document(movie.id).set(map).await()
         } catch (e: Exception) {
+            Log.e(TAG, "syncMovieToRemote failed", e)
         }
     }
 
@@ -51,6 +56,7 @@ class MovieRepository(private val dao: MovieDao) {
             }
             dao.deleteById(movie.id)
         } catch (e: Exception) {
+            Log.e(TAG, "deleteMovie failed", e)
         }
     }
 }
