@@ -1,5 +1,5 @@
 [versions]
-agp = "8.10.1"
+agp = "8.11.0"
 appcompatVersion = "1.6.1"
 constraintlayout = "2.1.4"
 firebaseAuthKtx = "22.1.1"
