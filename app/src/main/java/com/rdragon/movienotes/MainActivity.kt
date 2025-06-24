@@ -57,21 +57,21 @@ class MainActivity : AppCompatActivity() {
 
         btnGoogle.setOnClickListener {
             btnGoogle.isEnabled = false
-            val signInIntent = googleSignInClient.signInIntent
-            startActivityForResult(signInIntent, RC_SIGN_IN)
+            val currentUser = auth.currentUser
+            if (currentUser != null) {
+                auth.signOut()
+                googleSignInClient.signOut().addOnCompleteListener {
+                    btnGoogle.isEnabled = true
+                    launchSignIn()
+                }
+            } else {
+                btnGoogle.isEnabled = true
+                launchSignIn()
+            }
         }
 
-        authStateListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
-            val user = firebaseAuth.currentUser
-            if (user != null) {
-                updateUI()
-            } else {
-                btnGoogle.visibility = View.VISIBLE
-                searchLayout.visibility = View.GONE
-                addBtn.visibility = View.GONE
-                recyclerView.visibility = View.GONE
-                btnGoogle.isEnabled = true
-            }
+        authStateListener = FirebaseAuth.AuthStateListener {
+            updateUI()
         }
 
         updateUI()
@@ -90,13 +90,10 @@ class MainActivity : AppCompatActivity() {
     private fun updateUI() {
         val user = auth.currentUser
         if (user == null) {
-            btnGoogle.visibility = View.VISIBLE
             searchLayout.visibility = View.GONE
             addBtn.visibility = View.GONE
             recyclerView.visibility = View.GONE
-            btnGoogle.isEnabled = true
         } else {
-            btnGoogle.visibility = View.GONE
             searchLayout.visibility = View.VISIBLE
             addBtn.visibility = View.VISIBLE
             recyclerView.visibility = View.VISIBLE
@@ -106,6 +103,9 @@ class MainActivity : AppCompatActivity() {
             runBlocking { viewModel.syncFromRemote() }
             setupMainUI()
         }
+
+        btnGoogle.visibility = View.VISIBLE
+        btnGoogle.isEnabled = true
     }
 
     private fun setupMainUI() {
@@ -139,6 +139,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun launchSignIn() {
+        val signInIntent = googleSignInClient.signInIntent
+        startActivityForResult(signInIntent, RC_SIGN_IN)
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == RC_SIGN_IN) {
@@ -149,9 +154,7 @@ class MainActivity : AppCompatActivity() {
 
                 auth.signInWithCredential(cred)
                     .addOnCompleteListener { authTask ->
-                        if (authTask.isSuccessful) {
-                            // automatic call update ui from authStateListener
-                        } else {
+                        if (!authTask.isSuccessful) {
                             Toast.makeText(
                                 this,
                                 "Authentication failed: ${authTask.exception?.message}",
