@@ -73,6 +73,8 @@ class MainActivity : AppCompatActivity() {
                 btnGoogle.isEnabled = true
             }
         }
+
+        updateUI()
     }
 
     override fun onStart() {
