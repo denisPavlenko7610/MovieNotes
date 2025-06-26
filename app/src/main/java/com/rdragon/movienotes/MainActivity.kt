@@ -1,5 +1,6 @@
 package com.rdragon.movienotes
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -14,6 +15,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.CommonStatusCodes
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
@@ -61,11 +63,9 @@ class MainActivity : AppCompatActivity() {
             if (currentUser != null) {
                 auth.signOut()
                 googleSignInClient.signOut().addOnCompleteListener {
-                    btnGoogle.isEnabled = true
                     launchSignIn()
                 }
             } else {
-                btnGoogle.isEnabled = true
                 launchSignIn()
             }
         }
@@ -147,6 +147,10 @@ class MainActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == RC_SIGN_IN) {
+            if (resultCode != Activity.RESULT_OK) {
+                btnGoogle.isEnabled = true
+                return
+            }
             try {
                 val task = GoogleSignIn.getSignedInAccountFromIntent(data)
                 val account = task.getResult(ApiException::class.java)!!
@@ -160,15 +164,17 @@ class MainActivity : AppCompatActivity() {
                                 "Authentication failed: ${authTask.exception?.message}",
                                 Toast.LENGTH_LONG
                             ).show()
-                            btnGoogle.isEnabled = true
                         }
+                        btnGoogle.isEnabled = true
                     }
             } catch (e: ApiException) {
-                Toast.makeText(
-                    this,
-                    "Google sign-in failed (code ${e.statusCode}): ${e.localizedMessage}",
-                    Toast.LENGTH_LONG
-                ).show()
+                if (e.statusCode != CommonStatusCodes.CANCELED) {
+                    Toast.makeText(
+                        this,
+                        "Google sign-in failed (code ${e.statusCode}): ${e.localizedMessage}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
                 btnGoogle.isEnabled = true
             }
         }
