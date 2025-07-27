@@ -9,14 +9,14 @@ plugins {
 
 android {
     namespace = "com.rdragon.movienotes"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.RDragon.movienotes"
         minSdk = 28
         targetSdk = 35
-        versionCode = 20
-        versionName = "1.6"
+        versionCode = 22
+        versionName = "1.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
