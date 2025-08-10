@@ -6,6 +6,9 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Database(entities = [Movie::class], version = 2)
 abstract class MovieDatabase : RoomDatabase() {
@@ -29,7 +32,16 @@ abstract class MovieDatabase : RoomDatabase() {
                 )
                     .addMigrations(MIGRATION_1_2)
                     .build()
+
                 INSTANCE = inst
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        inst.movieDao().fixCreatedAt(System.currentTimeMillis())
+                    } catch (e: Exception) {
+                    }
+                }
+
                 inst
             }
         }

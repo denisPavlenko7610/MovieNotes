@@ -25,4 +25,7 @@ interface MovieDao {
 
     @Query("SELECT * FROM movies ORDER BY createdAt DESC")
     suspend fun getAllNow(): List<Movie>
+
+    @Query("UPDATE movies SET createdAt = :timestamp WHERE createdAt = 0")
+    suspend fun fixCreatedAt(timestamp: Long)
 }

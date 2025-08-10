@@ -11,6 +11,6 @@ data class Movie(
     val name: String,
     var watched: Boolean = false,
     val createdAt: Long = System.currentTimeMillis()
-) {
+){
     constructor() : this("", "", false, System.currentTimeMillis())
 }
