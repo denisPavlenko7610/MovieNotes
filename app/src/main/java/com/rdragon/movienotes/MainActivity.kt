@@ -100,6 +100,7 @@ class MainActivity : AppCompatActivity() {
 
             val factory = ViewModelProvider.AndroidViewModelFactory.getInstance(application)
             viewModel = ViewModelProvider(this, factory).get(MovieViewModel::class.java)
+
             runBlocking { viewModel.syncFromRemote() }
             setupMainUI()
         }
@@ -149,6 +150,7 @@ class MainActivity : AppCompatActivity() {
         if (requestCode == RC_SIGN_IN) {
             if (resultCode != Activity.RESULT_OK) {
                 btnGoogle.isEnabled = true
+                updateUI()
                 return
             }
             try {
@@ -176,6 +178,7 @@ class MainActivity : AppCompatActivity() {
                     ).show()
                 }
                 btnGoogle.isEnabled = true
+                updateUI()
             }
         }
     }

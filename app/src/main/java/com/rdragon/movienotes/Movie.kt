@@ -9,7 +9,8 @@ import com.google.firebase.firestore.IgnoreExtraProperties
 data class Movie(
     @PrimaryKey val id: String = "",
     val name: String,
-    var watched: Boolean = false
-){
-    constructor() : this("", "", false)
+    var watched: Boolean = false,
+    val createdAt: Long = System.currentTimeMillis()
+) {
+    constructor() : this("", "", false, System.currentTimeMillis())
 }

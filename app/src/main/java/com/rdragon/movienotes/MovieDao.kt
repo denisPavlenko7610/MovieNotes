@@ -8,10 +8,10 @@ import androidx.room.Query
 
 @Dao
 interface MovieDao {
-    @Query("SELECT * FROM movies WHERE watched = 0 ORDER BY name")
+    @Query("SELECT * FROM movies WHERE watched = 0 ORDER BY createdAt DESC")
     fun getUnwatched(): LiveData<List<Movie>>
 
-    @Query("SELECT * FROM movies WHERE name LIKE '%' || :query || '%' ORDER BY name")
+    @Query("SELECT * FROM movies WHERE name LIKE '%' || :query || '%' ORDER BY createdAt DESC")
     fun searchAll(query: String): LiveData<List<Movie>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -23,6 +23,6 @@ interface MovieDao {
     @Query("DELETE FROM movies")
     suspend fun clearAll()
 
-    @Query("SELECT * FROM movies ORDER BY id")
+    @Query("SELECT * FROM movies ORDER BY createdAt DESC")
     suspend fun getAllNow(): List<Movie>
 }
