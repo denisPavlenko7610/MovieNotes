@@ -28,6 +28,8 @@ roomCompilerVersion = "2.5.0"
 roomRuntime = "2.5.2"
 roomKtx = "2.5.2"
 runtime = "1.5.14"
+foundationLayout = "1.9.0"
+toolsCore = "1.0.0-alpha13"
 
 [libraries]
 androidx-appcompat-v161 = { module = "androidx.appcompat:appcompat", version.ref = "appcompatVersion" }
@@ -65,6 +67,8 @@ material = { module = "com.google.android.material:material", version.ref = "mat
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 play-services-auth-v2050 = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuthVersion" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomCompiler" }
+androidx-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
+androidx-tools-core = { group = "androidx.privacysandbox.tools", name = "tools-core", version.ref = "toolsCore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

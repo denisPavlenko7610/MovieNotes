@@ -15,8 +15,8 @@ android {
         applicationId = "com.RDragon.movienotes"
         minSdk = 28
         targetSdk = 35
-        versionCode = 26
-        versionName = "1.9"
+        versionCode = 27
+        versionName = "2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -69,6 +69,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.foundation.layout)
+    implementation(libs.androidx.tools.core)
     ksp(libs.room.compiler)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.kotlinx.coroutines.play.services)

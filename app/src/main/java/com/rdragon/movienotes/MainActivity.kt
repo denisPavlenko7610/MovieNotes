@@ -1,19 +1,19 @@
 package com.rdragon.movienotes
 
 import android.app.Activity
-import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doAfterTextChanged
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.auth.api.identity.BeginSignInRequest
+import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.CommonStatusCodes
 import com.google.android.material.textfield.TextInputEditText
@@ -23,14 +23,12 @@ import kotlinx.coroutines.runBlocking
 
 class MainActivity : AppCompatActivity() {
 
-    companion object {
-        private const val RC_SIGN_IN = 1001
-    }
-
     private lateinit var auth: FirebaseAuth
     private lateinit var authStateListener: FirebaseAuth.AuthStateListener
-    private lateinit var googleSignInClient: GoogleSignInClient
     private lateinit var viewModel: MovieViewModel
+
+    private lateinit var oneTapClient: SignInClient
+    private lateinit var signInRequest: BeginSignInRequest
 
     private lateinit var btnGoogle: ImageView
     private lateinit var searchInput: TextInputEditText
@@ -38,18 +36,68 @@ class MainActivity : AppCompatActivity() {
     private lateinit var recyclerView: androidx.recyclerview.widget.RecyclerView
     private lateinit var searchLayout: View
 
+    private val signInLauncher = registerForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode != Activity.RESULT_OK) {
+            btnGoogle.isEnabled = true
+            updateUI()
+            return@registerForActivityResult
+        }
+
+        try {
+            val credential = oneTapClient.getSignInCredentialFromIntent(result.data)
+            val idToken = credential.googleIdToken
+
+            if (idToken.isNullOrEmpty()) {
+                Toast.makeText(this, "Не удалось получить ID Token", Toast.LENGTH_LONG).show()
+                btnGoogle.isEnabled = true
+                updateUI()
+                return@registerForActivityResult
+            }
+
+            val firebaseCred = GoogleAuthProvider.getCredential(idToken, null)
+            auth.signInWithCredential(firebaseCred)
+                .addOnCompleteListener { authTask ->
+                    if (!authTask.isSuccessful) {
+                        Toast.makeText(
+                            this,
+                            "Authentication failed: ${authTask.exception?.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                    btnGoogle.isEnabled = true
+                }
+        } catch (e: ApiException) {
+            if (e.statusCode != CommonStatusCodes.CANCELED) {
+                Toast.makeText(
+                    this,
+                    "Google sign-in failed (code ${e.statusCode}): ${e.localizedMessage}",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+            btnGoogle.isEnabled = true
+            updateUI()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main_content)
 
         auth = FirebaseAuth.getInstance()
 
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(getString(R.string.default_web_client_id))
-            .requestEmail()
+        oneTapClient = Identity.getSignInClient(this)
+        signInRequest = BeginSignInRequest.Builder()
+            .setGoogleIdTokenRequestOptions(
+                BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
+                    .setSupported(true)
+                    .setServerClientId(getString(R.string.default_web_client_id))
+                    .setFilterByAuthorizedAccounts(false)
+                    .build()
+            )
+            .setAutoSelectEnabled(true)
             .build()
-
-        googleSignInClient = GoogleSignIn.getClient(this, gso)
 
         btnGoogle    = findViewById(R.id.btnGoogle)
         searchLayout = findViewById(R.id.searchLayout)
@@ -62,7 +110,7 @@ class MainActivity : AppCompatActivity() {
             val currentUser = auth.currentUser
             if (currentUser != null) {
                 auth.signOut()
-                googleSignInClient.signOut().addOnCompleteListener {
+                oneTapClient.signOut().addOnCompleteListener {
                     launchSignIn()
                 }
             } else {
@@ -123,9 +171,9 @@ class MainActivity : AppCompatActivity() {
         recyclerView.layoutManager = GridLayoutManager(this, 2)
         recyclerView.adapter = adapter
 
-        viewModel.movies.observe(this, Observer { list ->
+        viewModel.movies.observe(this) { list ->
             adapter.submitList(list ?: emptyList())
-        })
+        }
 
         addBtn.setOnClickListener {
             val title = searchInput.text.toString().trim()
@@ -141,45 +189,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun launchSignIn() {
-        val signInIntent = googleSignInClient.signInIntent
-        startActivityForResult(signInIntent, RC_SIGN_IN)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == RC_SIGN_IN) {
-            if (resultCode != Activity.RESULT_OK) {
-                btnGoogle.isEnabled = true
-                updateUI()
-                return
+        oneTapClient.beginSignIn(signInRequest)
+            .addOnSuccessListener { result ->
+                val request = IntentSenderRequest.Builder(result.pendingIntent.intentSender).build()
+                signInLauncher.launch(request)
             }
-            try {
-                val task = GoogleSignIn.getSignedInAccountFromIntent(data)
-                val account = task.getResult(ApiException::class.java)!!
-                val cred = GoogleAuthProvider.getCredential(account.idToken, null)
-
-                auth.signInWithCredential(cred)
-                    .addOnCompleteListener { authTask ->
-                        if (!authTask.isSuccessful) {
-                            Toast.makeText(
-                                this,
-                                "Authentication failed: ${authTask.exception?.message}",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                        btnGoogle.isEnabled = true
-                    }
-            } catch (e: ApiException) {
-                if (e.statusCode != CommonStatusCodes.CANCELED) {
-                    Toast.makeText(
-                        this,
-                        "Google sign-in failed (code ${e.statusCode}): ${e.localizedMessage}",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
+            .addOnFailureListener { e ->
+                Toast.makeText(
+                    this,
+                    "Google Sign-In failed to launch: ${e.localizedMessage}",
+                    Toast.LENGTH_LONG
+                ).show()
                 btnGoogle.isEnabled = true
                 updateUI()
             }
-        }
     }
 }
