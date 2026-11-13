@@ -3,11 +3,12 @@ package com.rdragon.movienotes
 import android.app.Activity
 import android.os.Bundle
 import android.view.View
-import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.Group
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
@@ -16,10 +17,11 @@ import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.CommonStatusCodes
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
-import kotlinx.coroutines.runBlocking
 
 class MainActivity : AppCompatActivity() {
 
@@ -30,18 +32,24 @@ class MainActivity : AppCompatActivity() {
     private lateinit var oneTapClient: SignInClient
     private lateinit var signInRequest: BeginSignInRequest
 
-    private lateinit var btnGoogle: ImageView
+    private lateinit var btnLogout: MaterialButton
+    private lateinit var userEmailText: TextView
+    private lateinit var authCard: MaterialCardView
+    private lateinit var btnGoogle: MaterialButton
+
+    private lateinit var mainContentGroup: Group
     private lateinit var searchInput: TextInputEditText
-    private lateinit var addBtn: ImageView
+    private lateinit var addBtn: MaterialButton
     private lateinit var recyclerView: androidx.recyclerview.widget.RecyclerView
-    private lateinit var searchLayout: View
+    private lateinit var emptyStateView: TextView
+
+    private lateinit var adapter: MovieAdapter
 
     private val signInLauncher = registerForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
+        btnGoogle.isEnabled = true
         if (result.resultCode != Activity.RESULT_OK) {
-            btnGoogle.isEnabled = true
-            updateUI()
             return@registerForActivityResult
         }
 
@@ -50,9 +58,7 @@ class MainActivity : AppCompatActivity() {
             val idToken = credential.googleIdToken
 
             if (idToken.isNullOrEmpty()) {
-                Toast.makeText(this, "Не удалось получить ID Token", Toast.LENGTH_LONG).show()
-                btnGoogle.isEnabled = true
-                updateUI()
+                Toast.makeText(this, "Failed to get ID Token", Toast.LENGTH_LONG).show()
                 return@registerForActivityResult
             }
 
@@ -66,18 +72,15 @@ class MainActivity : AppCompatActivity() {
                             Toast.LENGTH_LONG
                         ).show()
                     }
-                    btnGoogle.isEnabled = true
                 }
         } catch (e: ApiException) {
             if (e.statusCode != CommonStatusCodes.CANCELED) {
                 Toast.makeText(
                     this,
-                    "Google sign-in failed (code ${e.statusCode}): ${e.localizedMessage}",
+                    "Google sign-in failed: ${e.localizedMessage}",
                     Toast.LENGTH_LONG
                 ).show()
             }
-            btnGoogle.isEnabled = true
-            updateUI()
         }
     }
 
@@ -86,6 +89,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main_content)
 
         auth = FirebaseAuth.getInstance()
+        viewModel = ViewModelProvider(this)[MovieViewModel::class.java]
 
         oneTapClient = Identity.getSignInClient(this)
         signInRequest = BeginSignInRequest.Builder()
@@ -99,23 +103,39 @@ class MainActivity : AppCompatActivity() {
             .setAutoSelectEnabled(true)
             .build()
 
-        btnGoogle    = findViewById(R.id.btnGoogle)
-        searchLayout = findViewById(R.id.searchLayout)
-        searchInput  = findViewById(R.id.searchInput)
-        addBtn       = findViewById(R.id.addBtn)
-        recyclerView = findViewById(R.id.recyclerView)
+        btnLogout        = findViewById(R.id.btnLogout)
+        userEmailText    = findViewById(R.id.userEmailText)
+        authCard         = findViewById(R.id.authCard)
+        btnGoogle        = findViewById(R.id.btnGoogle)
+        mainContentGroup = findViewById(R.id.mainContentGroup)
+        searchInput      = findViewById(R.id.searchInput)
+        addBtn           = findViewById(R.id.addBtn)
+        recyclerView     = findViewById(R.id.recyclerView)
+        emptyStateView   = findViewById(R.id.emptyStateView)
+
+        setupRecyclerView()
 
         btnGoogle.setOnClickListener {
             btnGoogle.isEnabled = false
-            val currentUser = auth.currentUser
-            if (currentUser != null) {
-                auth.signOut()
-                oneTapClient.signOut().addOnCompleteListener {
-                    launchSignIn()
-                }
-            } else {
-                launchSignIn()
+            launchSignIn()
+        }
+
+        btnLogout.setOnClickListener {
+            auth.signOut()
+            oneTapClient.signOut()
+            viewModel.clearLocalData()
+        }
+
+        addBtn.setOnClickListener {
+            val title = searchInput.text.toString().trim()
+            if (title.isNotEmpty()) {
+                viewModel.addNewMovie(title)
+                searchInput.text?.clear()
             }
+        }
+
+        searchInput.doAfterTextChanged { editable ->
+            viewModel.setSearchQuery(editable?.toString() ?: "")
         }
 
         authStateListener = FirebaseAuth.AuthStateListener {
@@ -135,30 +155,8 @@ class MainActivity : AppCompatActivity() {
         auth.removeAuthStateListener(authStateListener)
     }
 
-    private fun updateUI() {
-        val user = auth.currentUser
-        if (user == null) {
-            searchLayout.visibility = View.GONE
-            addBtn.visibility = View.GONE
-            recyclerView.visibility = View.GONE
-        } else {
-            searchLayout.visibility = View.VISIBLE
-            addBtn.visibility = View.VISIBLE
-            recyclerView.visibility = View.VISIBLE
-
-            val factory = ViewModelProvider.AndroidViewModelFactory.getInstance(application)
-            viewModel = ViewModelProvider(this, factory).get(MovieViewModel::class.java)
-
-            runBlocking { viewModel.syncFromRemote() }
-            setupMainUI()
-        }
-
-        btnGoogle.visibility = View.VISIBLE
-        btnGoogle.isEnabled = true
-    }
-
-    private fun setupMainUI() {
-        val adapter = MovieAdapter(
+    private fun setupRecyclerView() {
+        adapter = MovieAdapter(
             onCheckedChange = { movie, isChecked ->
                 movie.watched = isChecked
                 viewModel.updateMovie(movie)
@@ -172,19 +170,33 @@ class MainActivity : AppCompatActivity() {
         recyclerView.adapter = adapter
 
         viewModel.movies.observe(this) { list ->
-            adapter.submitList(list ?: emptyList())
-        }
-
-        addBtn.setOnClickListener {
-            val title = searchInput.text.toString().trim()
-            if (title.isNotEmpty()) {
-                viewModel.addNewMovie(title)
-                searchInput.text?.clear()
+            val movies = list ?: emptyList()
+            adapter.submitList(movies)
+            emptyStateView.visibility = if (movies.isEmpty() && auth.currentUser != null) {
+                View.VISIBLE
+            } else {
+                View.GONE
             }
         }
+    }
 
-        searchInput.doAfterTextChanged { editable ->
-            viewModel.setSearchQuery(editable?.toString() ?: "")
+    private fun updateUI() {
+        val user = auth.currentUser
+        if (user == null) {
+            authCard.visibility = View.VISIBLE
+            mainContentGroup.visibility = View.GONE
+            btnLogout.visibility = View.GONE
+            userEmailText.visibility = View.GONE
+            emptyStateView.visibility = View.GONE
+            btnGoogle.isEnabled = true
+        } else {
+            authCard.visibility = View.GONE
+            mainContentGroup.visibility = View.VISIBLE
+            btnLogout.visibility = View.VISIBLE
+            userEmailText.visibility = View.VISIBLE
+            userEmailText.text = user.email ?: user.displayName ?: ""
+
+            viewModel.syncFromRemote()
         }
     }
 
@@ -201,7 +213,6 @@ class MainActivity : AppCompatActivity() {
                     Toast.LENGTH_LONG
                 ).show()
                 btnGoogle.isEnabled = true
-                updateUI()
             }
     }
 }

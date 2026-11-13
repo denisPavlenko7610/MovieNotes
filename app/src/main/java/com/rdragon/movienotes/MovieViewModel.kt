@@ -1,7 +1,11 @@
 package com.rdragon.movienotes
 
 import android.app.Application
-import androidx.lifecycle.*
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.switchMap
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -12,10 +16,11 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
     private val _searchQuery = MutableLiveData<String>("")
 
     val movies: LiveData<List<Movie>> = _searchQuery.switchMap { query ->
-        if (query.isBlank()) {
-            dao.getUnwatched()
+        val q = query ?: ""
+        if (q.isBlank()) {
+            dao.getAllMovies()
         } else {
-            dao.searchAll(query)
+            dao.searchAll(q)
         }
     }
 
@@ -40,5 +45,9 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
 
     fun syncFromRemote() = viewModelScope.launch {
         repo.syncFromRemote()
+    }
+
+    fun clearLocalData() = viewModelScope.launch {
+        repo.clearLocalData()
     }
 }

@@ -1,6 +1,5 @@
 package com.rdragon.movienotes
 
-import android.graphics.Color
 import android.graphics.Paint
 import android.view.LayoutInflater
 import android.view.View
@@ -8,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -34,12 +34,13 @@ class MovieAdapter(
 
         fun bind(movie: Movie) {
             title.text = movie.name
+            val context = itemView.context
 
             if (movie.watched) {
-                title.setTextColor(Color.GRAY)
+                title.setTextColor(ContextCompat.getColor(context, R.color.text_dim))
                 title.paintFlags = title.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
             } else {
-                title.setTextColor(Color.BLACK)
+                title.setTextColor(ContextCompat.getColor(context, R.color.text_primary))
                 title.paintFlags = title.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
             }
 

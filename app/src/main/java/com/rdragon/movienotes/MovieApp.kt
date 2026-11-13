@@ -1,7 +1,6 @@
 package com.rdragon.movienotes
 
 import android.app.Application
-import com.google.firebase.BuildConfig
 import com.google.firebase.FirebaseApp
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.firestore.FirebaseFirestore

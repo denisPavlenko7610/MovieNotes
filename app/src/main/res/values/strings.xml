@@ -1,4 +1,3 @@
-<!-- res/values/strings.xml -->
 <resources>
     <string name="app_name">Movie Notes</string>
     <string name="search_hint">Search movies…</string>
@@ -8,4 +7,8 @@
     <string name="empty_list">No movies found. Add your first!</string>
     <string name="default_web_client_id">262190133362-977vq5bojebrv0sgcacd1n82jtr85u8t.apps.googleusercontent.com</string>
     <string name="title_auth">Authorization</string>
+    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="auth_subtitle">Sign in to save and sync your movie list</string>
+    <string name="logout">Logout</string>
+    <string name="logged_in_as">Logged in as %1$s</string>
 </resources>

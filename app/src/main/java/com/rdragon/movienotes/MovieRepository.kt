@@ -20,14 +20,15 @@ class MovieRepository(private val dao: MovieDao) {
         if (user.isAnonymous) return
 
         try {
-            dao.clearAll()
             val remoteRef = db.collection("users").document(user.uid).collection("movies")
             val snapshot = remoteRef.get().await()
             val list = snapshot.documents.mapNotNull { doc ->
                 doc.toObject(Movie::class.java)?.copy(id = doc.id)
             }
             Log.d(TAG, "Fetched ${list.size} movies from Firestore")
-            dao.insertAll(list)
+            if (list.isNotEmpty()) {
+                dao.insertAll(list)
+            }
         } catch (e: Exception) {
             Log.e(TAG, "syncFromRemote failed", e)
         }
@@ -39,7 +40,11 @@ class MovieRepository(private val dao: MovieDao) {
 
         try {
             val remoteRef = db.collection("users").document(user.uid).collection("movies")
-            val map = mapOf("name" to movie.name, "watched" to movie.watched)
+            val map = mapOf(
+                "name" to movie.name,
+                "watched" to movie.watched,
+                "createdAt" to movie.createdAt
+            )
             Log.d(TAG, "Saving movie to Firestore: ${movie.id} ${movie.name}")
             remoteRef.document(movie.id).set(map).await()
         } catch (e: Exception) {
@@ -57,6 +62,14 @@ class MovieRepository(private val dao: MovieDao) {
             dao.deleteById(movie.id)
         } catch (e: Exception) {
             Log.e(TAG, "deleteMovie failed", e)
+        }
+    }
+
+    suspend fun clearLocalData() {
+        try {
+            dao.clearAll()
+        } catch (e: Exception) {
+            Log.e(TAG, "clearLocalData failed", e)
         }
     }
 }
